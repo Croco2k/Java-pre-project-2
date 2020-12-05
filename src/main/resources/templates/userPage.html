@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>User Page</title>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="navbar-brand">
+            <b th:text="${user.email}"></b> with roles: <b th:each="role : ${user.roles}"
+                                                           th:text="${role.role} + ' '"></b>
+        </div>
+        <div class="navbar-text">
+            <a th:href="@{/logout}" class="text-muted">Logout</a>
+        </div>
+    </nav>
+</header>
+
+<div class="container-fluid" style="background-color: #f1f1f1; padding: 0;">
+    <div class="row no-gutters vh-100">
+        <div class="col-2" style="background-color: white; padding-top: 1rem;">
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <a class="nav-link active" id="v-pills-user-tab" data-toggle="pill" href="#v-pills-user" role="tab"
+                   aria-controls="v-pills-admin" aria-selected="true">User</a>
+            </div>
+        </div>
+        <div class="col-10" style="padding: 1rem 2rem;">
+            <div class="tab-pane fade show active" id="v-pills-user" role="tabpanel" aria-labelledby="v-pills-user-tab">
+                <h1>User information-page</h1>
+                <div class="container-fluid"
+                     style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 5px; padding: 0 0 1.5rem 0;">
+                    <div style="border-bottom: 1px solid lightgrey; margin-bottom: 1rem; background-color: #f1f1f1;">
+                        <div>
+                            <div class="p-2 pl-4">
+                                <h5 style="margin: 0; padding: 0.5rem 0">About user</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 0 1.5rem">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">First Name</th>
+                                <th scope="col">Last Name</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Roles</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td th:text="${user.id}"/>
+                                <td th:text="${user.firstName}"/>
+                                <td th:text="${user.lastName}"/>
+                                <td th:text="${user.email}"/>
+                                <td>
+                                    <t th:each="role : ${user.roles}" th:text="${role.role.replace('ROLE_', '')} + ' '"></t>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+</html>
