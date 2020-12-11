@@ -10,17 +10,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import ru.javamentor.springboot.service.UserServiceImpl;
 
 @Controller
-@RequestMapping("/user/")
-public class UserController {
+@RequestMapping("/admin/")
+public class SimpleController {
 
     @Autowired
     private UserServiceImpl userService;
 
     @GetMapping("")
-    public String printUserInfo(Model model) {
+    public String getAllUsers(Model model){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        model.addAttribute("user", userService.getUserByName(auth.getName()));
-        return "userPage";
+        model.addAttribute("springUser", userService.getUserByName(auth.getName()));
+        return "adminPage";
     }
+
 
 }

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>Admin panel</title>
+</head>
+<style>
+    .form-control {
+        width: 45%;
+        margin: 0 auto;
+    }
+
+    .col-form-label {
+        font-weight: bold;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .form-group {
+        text-align: center;
+    }
+</style>
+<body>
+<script src="http://code.jquery.com/jquery-2.2.4.js"></script>
+<script>
+
+    $(document).ready(function () {
+        getAllUsers();
+    });
+
+    function getAllUsers() {
+        fetch('http://localhost:8080/admin/users', {method: "GET"}).then(
+            res => {
+                res.json().then(
+                    users => {
+                        $("#table").empty();
+                        let table = '';
+                        for (let i = 0; i < users.length; i++){
+                            let roles = '';
+                            for (let value of users[i].roles) {
+                                roles += value.role.replace('ROLE_', '') + " ";
+                            }
+                            table = $("<tr>").attr("id", users[i].id);
+                            table.append("" +
+                                "<td>" + users[i].id + "</td>" +
+                                "<td>" + users[i].firstName + "</td>" +
+                                "<td>" + users[i].lastName + "</td>" +
+                                "<td>" + users[i].email + "</td>" +
+                                "<td>" + roles + "</td>" +
+                                "<td><button onclick='getUser(" + users[i].id + ")' class='btn btn-info btn-sm' data-toggle='modal' data-target='#EditModal'>Edit</button></td>" +
+                                "<td><button onclick='getUserDelete(" + users[i].id + ")' class='btn btn-danger btn-sm' data-toggle='modal' data-target='#DeleteModal'>Delete</button></td>"
+                            );
+                            $("#mainTable").append(table)
+                        }
+                    }
+                )
+            }
+        )
+    }
+
+    let allRoles = ["ROLE_ADMIN", "ROLE_USER"];
+    function getUser(id) {
+        fetch(`http://localhost:8080/admin/user/${id}`, {method: "GET"}).then(
+            res => {
+                res.json().then(
+                    user => {
+                        $(".modal-body #getId").val(user.id)
+                        $(".modal-body #getFirstName").val(user.firstName)
+                        $(".modal-body #getLastName").val(user.lastName)
+                        $(".modal-body #getEmail").val(user.email)
+                        $(".modal-body #getRoles").empty();
+                        $.each(allRoles, (i, role) => {
+                            $("#getRoles").append(
+                                $("<option>").text(role)
+                            )
+                        });
+                        $("#getRoles").val(user.roles);
+                        localStorage.setItem('idForUpdate', user.id)
+                    }
+                )
+            }
+        )
+    }
+
+    function getUserDelete(id) {
+        fetch(`http://localhost:8080/admin/user/${id}`, {method: "GET"}).then(
+            res => {
+                res.json().then(
+                    user => {
+                        let roles = '';
+                        for (let value of user.roles) {
+                            roles += value.role.replace('ROLE_', '') + " ";
+                        }
+                        $(".modal-body #getIdDelete").val(user.id)
+                        $(".modal-body #getFirstNameDelete").val(user.firstName)
+                        $(".modal-body #getLastNameDelete").val(user.lastName)
+                        $(".modal-body #getEmailDelete").val(user.email)
+                        $(".modal-body #getRolesDelete").val(roles)
+                        localStorage.setItem('idForDelete', user.id)
+                    }
+                )
+            }
+        )
+    }
+
+    function createUser() {
+        event.preventDefault();
+        let user = {
+            firstName : document.getElementById('addFirstName').value,
+            lastName : document.getElementById('addLastName').value,
+            email : document.getElementById('addEmail').value,
+            password : document.getElementById('addPassword').value,
+            roles : $('#addRoles').val()
+        }
+        fetch(`http://localhost:8080/admin/user`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify(user)
+        }).then(
+            () => getAllUsers()
+        ).then(
+            () => {
+                $('#tabs-UsersTable-NewUser a[href="#usersTable"]').tab('show');
+                    $("#addFirstName").empty().val("");
+                    $("#addLastName").empty().val("");
+                    $("#addEmail").empty().val("");
+                    $("#addPassword").empty().val("");
+                    $("option:selected").prop("selected", false);
+            }
+        )
+    }
+
+    function updateUser(id) {
+        event.preventDefault();
+        let user = {
+            firstName : document.getElementById('getFirstName').value,
+            lastName : document.getElementById('getLastName').value,
+            email : document.getElementById('getEmail').value,
+            password : document.getElementById('getPassword').value,
+            roles : $('#getRoles').val()
+        }
+        fetch(`http://localhost:8080/admin/user/${id}`, {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify(user)
+        }).then(
+            () => {
+                getAllUsers();
+                $("#EditModal").modal('hide');
+            }
+        )
+    }
+
+    function deleteUser(id) {
+        fetch(`http://localhost:8080/admin/user/${id}`, {method: "DELETE"}).then(
+            $("#DeleteModal").modal('hide'),
+            $("#table #" + id).remove()
+        )
+    }
+
+</script>
+
+<header>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="navbar-brand">
+            <b th:text="${springUser.getEmail()}"></b> with roles: <b th:each="role : ${springUser.roles}"
+                                                                      th:text="${role.role.replace('ROLE_', '')} + ' '"></b>
+        </div>
+        <div class="navbar-text">
+            <a th:href="@{/logout}" class="text-muted">Logout</a>
+        </div>
+    </nav>
+</header>
+
+<div class="container-fluid" style="background-color: #f1f1f1; padding: 0;">
+    <div class="row no-gutters vh-100">
+        <div class="col-2" style="background-color: white; padding-top: 1rem;">
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <a class="nav-link active" id="v-pills-admin-tab" data-toggle="pill" href="#v-pills-admin" role="tab"
+                   aria-controls="v-pills-admin" aria-selected="true">Admin</a>
+                <a class="nav-link" id="v-pills-user-tab" data-toggle="pill" href="#v-pills-user" role="tab"
+                   aria-controls="v-pills-user" aria-selected="false">User</a>
+            </div>
+        </div>
+        <div class="col-10" style="padding: 1rem 2rem;">
+            <div class="tab-content" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="v-pills-admin" role="tabpanel"
+                     aria-labelledby="v-pills-admin-tab">
+                    <h1>Admin Panel</h1>
+                    <div class="tabbable" id="tabs-UsersTable-NewUser">
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="usersTable-tab" data-toggle="tab" href="#usersTable"
+                                   role="tab" aria-controls="usersTable" aria-selected="true">Users table</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="newUser-tab" data-toggle="tab" href="#newUser" role="tab"
+                                   aria-controls="newUser" aria-selected="false">New User</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="myTabContent"
+                             style="border: 1px solid lightgrey; border-radius: 5px 5px 0 0">
+                            <div class="tab-pane fade show active" id="usersTable" role="tabpanel"
+                                 aria-labelledby="usersTable-tab">
+                                <div class="p-2 pl-4">
+                                    <h5 class="m-0"> All users </h5>
+                                </div>
+                                <div class="container-fluid p-4"
+                                     style="background-color: #ffffff; border-radius: 0 0 5px 5px">
+                                    <table id="mainTable" class="table table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th scope="col">ID</th>
+                                            <th scope="col">First Name</th>
+                                            <th scope="col">Last Name</th>
+                                            <th scope="col">Email</th>
+                                            <th scope="col">Role</th>
+                                            <th scope="col">Edit</th>
+                                            <th scope="col">Delete</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="table"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="newUser" role="tabpanel" aria-labelledby="newUser-tab">
+                                <div class="p-2 pl-4">
+                                    <h5 class="m-0"> Add new user </h5>
+                                </div>
+                                <div class="container-fluid p-4"
+                                     style="background-color: #ffffff; border-radius: 0 0 5px 5px">
+                                    <form name="my-form" id="newForm">
+                                        <div class="form-group">
+                                            <label class="col-form-label">First Name</label>
+                                            <input id="addFirstName" type="text" class="form-control" name="firstName" style="width: 300px">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-form-label">Last Name</label>
+                                            <input id="addLastName" type="text" class="form-control" name="lastName" style="width: 300px">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-form-label">Email</label>
+                                            <input id="addEmail" type="text" class="form-control" name="email" style="width: 300px">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-form-label">Password</label>
+                                            <input id="addPassword" type="password" class="form-control" name="password" style="width: 300px">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-form-label">Role</label>
+                                            <select id="addRoles" multiple size="2" class="form-control" name="role" style="width: 300px">
+                                                <option value="ROLE_ADMIN">ROLE_ADMIN</option>
+                                                <option value="ROLE_USER">ROLE_USER</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <button id="addUserButton" onclick="createUser()" type="submit" class="btn btn-success">
+                                                Add new user
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="tab-pane fade" id="v-pills-user" role="tabpanel" aria-labelledby="v-pills-user-tab">
+                    <h1>User information-page</h1>
+                    <div class="container-fluid"
+                         style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 5px; padding: 0 0 1.5rem 0;">
+                        <div style="border-bottom: 1px solid lightgrey; margin-bottom: 1rem; background-color: #f1f1f1;">
+                            <div>
+                                <div class="p-2 pl-4">
+                                    <h5 style="margin: 0; padding: 0.5rem 0">About user</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 0 1.5rem">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">First Name</th>
+                                    <th scope="col">Last Name</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Roles</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td th:text="${springUser.id}"/>
+                                    <td th:text="${springUser.firstName}"/>
+                                    <td th:text="${springUser.lastName}"/>
+                                    <td th:text="${springUser.email}"/>
+                                    <td>
+                                        <t th:each="role : ${springUser.roles}"
+                                           th:text="${role.role.replace('ROLE_', '')} + ' '"></t>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="EditModal" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <form class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Edit User</h4>
+            </div>
+            <div class="modal-body text-center" id="editUserModal">
+                <div class="form-group">
+                    <label class="col-form-label">ID</label>
+                    <input type="text" class="form-control"
+                           id="getId" name="id"
+                           readonly>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label">First
+                        name</label>
+                    <input type="text" class="form-control"
+                           id="getFirstName"
+                           name="firstName">
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label">Last
+                        name</label>
+                    <input type="text" class="form-control"
+                           id="getLastName"
+                           name="lastName">
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label">Email</label>
+                    <input type="text" class="form-control"
+                           id="getEmail" name="email">
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label">Password</label>
+                    <input type="password" class="form-control"
+                           id="getPassword" name="password">
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label">Role</label>
+                    <select id="getRoles" multiple size="2" class="form-control" name="role">
+                        <option value="ROLE_ADMIN">ROLE_ADMIN</option>
+                        <option value="ROLE_USER">ROLE_USER</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                        data-dismiss="modal">
+                    Close
+                </button>
+                <button id="updateButton"
+                        onclick="updateUser(localStorage.getItem('idForUpdate'))"
+                        class="btn btn-primary"
+                        role="button">
+                    Edit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="DeleteModal" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Delete user</h4>
+            </div>
+            <div class="modal-body text-center">
+                <form>
+                    <div class="form-group">
+                        <label class="col-form-label">ID</label>
+                        <input type="text" class="form-control"
+                               id="getIdDelete"
+                               readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-form-label">First
+                            name</label>
+                        <input type="text" class="form-control"
+                               id="getFirstNameDelete"
+                               readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-form-label">Last
+                            name</label>
+                        <input type="text" class="form-control"
+                               id="getLastNameDelete"
+                               readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-form-label">Email</label>
+                        <input type="text" class="form-control"
+                               id="getEmailDelete"
+                               readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-form-label">Role</label>
+<!--                        <select multiple size="2"-->
+<!--                                class="form-control"-->
+<!--                                style="background-color: #e9ecef;">-->
+<!--                            <option id="getRolesDelete"-->
+<!--                                    disabled></option>-->
+<!--                        </select>-->
+                        <input type="text" class="form-control"
+                               id="getRolesDelete"
+                               readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                        data-dismiss="modal">
+                    Close
+                </button>
+                <button id="deleteButton"
+                        onclick="deleteUser(localStorage.getItem('idForDelete'))"
+                        class="btn btn-danger"
+                        role="button">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+</html>
+</html>

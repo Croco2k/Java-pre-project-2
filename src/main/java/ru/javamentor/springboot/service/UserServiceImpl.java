@@ -8,6 +8,7 @@ import ru.javamentor.springboot.model.User;
 import ru.javamentor.springboot.repositories.RoleRepository;
 import ru.javamentor.springboot.repositories.UserRepository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,13 +38,17 @@ public class UserServiceImpl {
         return roleRepository.findRoleByRole(role);
     }
 
-    public void save(User user, Set<Role> roles) {
+    public User save(User user) {
+        Set<Role> roles = new HashSet<>();
+        for (Role role: user.getRoles()){
+            roles.add(roleRepository.findRoleByRole(role.getRole()));
+        }
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
         user.setRoles(roles);
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
-    public void update(Long id, User user, Set<Role> roles) {
+    public User update(Long id, User user) {
         User userToBeUpdated = getUserById(id);
         if (!user.getFirstName().isEmpty()) {
             userToBeUpdated.setFirstName(user.getFirstName());
@@ -57,8 +62,12 @@ public class UserServiceImpl {
         if (!user.getPassword().isEmpty()) {
             user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
         }
+        Set<Role> roles = new HashSet<>();
+        for (Role role: user.getRoles()){
+            roles.add(roleRepository.findRoleByRole(role.getRole()));
+        }
         userToBeUpdated.setRoles(roles);
-        userRepository.save(userToBeUpdated);
+        return userRepository.save(userToBeUpdated);
     }
 
     public void delete(Long id) {
